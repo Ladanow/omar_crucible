@@ -300,8 +300,9 @@ all:
               mac: "DE:AD:BE:EF:C0:2D"
             master3:
               ansible_host: 10.1.198.134
+              mac: "DE:AD:BE:EF:C0:2E"
         workers:
-          var:
+          vars:
             role: worker
             vendor: Dell
           hosts:   
