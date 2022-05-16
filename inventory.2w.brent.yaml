@@ -313,45 +313,44 @@ all:
           vars:
             role: worker #vendor: Dell # This example uses baremetal worker nodes
             vendor: Dell
-            network_config:
-              raw:
-                interfaces:
-                - name: eno2
-                  type: ethernet
-                  state: up
-                  ipv4: 
-                    enabled: false
-                  ipv6:
-                    enabled: false
-                - name: ens3f1
-                  type: ethernet
-                  mac: "{{ mac }}"
-                  state: up
-                  ipv4:
-                    address:
-                      - ip: "{{ ansible_host }}"
-                        prefix-length: "{{ mask }}"
-                dns-resolver:
-                  config:
-                    server:
-                      - "{{ dns1 }}"
-                routes:
-                  config:
-                    - destination: 0.0.0.0/0
-                      next-hop-address: "{{ gateway }}"
-                      next-hop-interface: ens3f1
-                      metric: 50
-              interfaces:
-                - name: ens3f1
-                  macAddress: "{{ mac }}"
-                - name: eno2
-                  macAddress: "{{ eno2mac }}"
+            #     network_config:
+            #       raw:
+            #         interfaces:
+            #         - name: eno2
+            #           type: ethernet
+            #           state: up
+            #           ipv4: 
+            #             enabled: false
+            #           ipv6:
+            #             enabled: false
+            #         - name: ens3f1
+            #           type: ethernet
+            #           state: up
+            #           ipv4:
+            #             address:
+            #               - ip: "{{ ansible_host }}"
+            #                 prefix-length: "{{ mask }}"
+            #         dns-resolver:
+            #           config:
+            #             server:
+            #               - "{{ dns1 }}"
+            #         routes:
+            #           config:
+            #             - destination: 0.0.0.0/0
+            #               next-hop-address: "{{ gateway }}"
+            #               next-hop-interface: ens3f1
+            #               metric: 50
+            #  interfaces:
+            #    - name: ens3f1
+            #      macAddress: "{{ mac }}"
+            #    - name: eno2
+            #      macAddress: "{{ eno2mac }}"
           hosts:
             worker1:
               ansible_host: 10.1.198.137
               bmc_address: 10.1.177.52
               mac: "3C:FD:FE:78:A5:31"
-              eno2mac: "E4:43:4B:4E:3F:B9"
+              #  eno2mac: "E4:43:4B:4E:3F:B9"
 
               # # Uncomment to set custom BMC credentials for the node
               # # These variables must be set in the inventory.vault.yml file
@@ -367,7 +366,7 @@ all:
               mac: "3C:FD:FE:78:AC:51"
               bmc_user: "{{ VAULT_NODES_WORKER2_BMC_USER | mandatory }}"
               bmc_password: "{{ VAULT_NODES_WORKER2_BMC_PASSWORD | mandatory }}"
-              eno2mac: "E4:43:4B:4E:44:B1"
+              # eno2mac: "E4:43:4B:4E:44:B1"
 
               # # Uncomment to set an alternate installation disk device for the node
               # installation_disk_path: /dev/sdb
