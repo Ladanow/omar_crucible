@@ -1,0 +1,130 @@
+all:
+  vars:
+    cluster_name: clustername
+    base_dns_domain: example.lab
+    openshift_full_version: 4.6.16
+    api_vip: 10.60.0.96 # the IP address to be used for api.clustername.example.lab and api-int.clustername.example.lab
+    ingress_vip: 10.60.0.97 # the IP address to be used for *.apps.clustername.example.lab
+    vip_dhcp_allocation: false
+    machine_network_cidr: 10.60.0.0/24
+    service_network_cidr: 172.30.0.0/16
+    cluster_network_cidr: 10.128.0.0/14 # The subnet, internal to the cluster, on which pods will be assigned IPs
+    cluster_network_host_prefix: 23 # The subnet prefix length to assign to each individual node.
+    setup_ntp_service: false
+    setup_dns_service: false
+    setup_pxe_service: false
+    setup_registry_service: false # Only required for a Restricted Network installation
+    setup_http_store_service: true
+    setup_assisted_installer: true # default is true you may wish to turn it off if multiple users are using the same instance.
+    ntp_server: 10.40.0.100
+    use_local_mirror_registry: false
+    discovery_iso_name: "discovery/{{ cluster_name }}/discovery-image.iso"
+    discovery_iso_server: "http://{{ hostvars['http_store']['ansible_host'] }}"
+    repo_root_path: /home/redhat/crucible/ # path to repository root
+    fetched_dest: "{{ repo_root_path }}/fetched"
+    pull_secret_lookup_paths:
+      - "{{ fetched_dest }}/pull-secret.txt"
+      - "{{ repo_root_path }}/pull-secret.txt"
+    ssh_public_key_lookup_paths:
+      - "{{ fetched_dest }}/ssh_keys/{{ cluster_name }}.pub"
+      - "{{ repo_root_path }}/ssh_public_key.pub"
+      - ~/.ssh/id_rsa.pub
+    ssh_key_dest_base_dir: /home/redhat
+    kubeconfig_dest_dir: /home/redhat/
+    kubeconfig_dest_filename: "{{ cluster_name }}-kubeconfig"
+    kubeadmin_dest_filename: "{{ cluster_name }}-kubeadmin.vault.yml"
+    kubeadmin_vault_password_file_path: "{{ repo_root_path }}/kubeadmin_vault_password_file"
+    local_pull_secret_path: "{{ lookup('first_found', pull_secret_lookup_paths) }}"
+    pull_secret: "{{ lookup('file', local_pull_secret_path) }}"
+    local_ssh_public_key_path: "{{ lookup('first_found', ssh_public_key_lookup_paths) }}"
+    ssh_public_key: "{{ lookup('file', local_ssh_public_key_path) }}"
+    local_mirror_certificate_path: "{{ (setup_registry_service == true) | ternary(
+        fetched_dest + '/' + (hostvars['registry_host']['cert_file_prefix'] | default('registry')) + '.crt',
+        repo_root_path + '/mirror_certificate.txt')
+      }}"
+    mirror_certificate: "{{ lookup('file', local_mirror_certificate_path) }}"
+    openshift_version: "{{ openshift_full_version.split('.')[:2] | join('.') }}"
+    is_valid_single_node_openshift_config: "{{ (groups['nodes'] | length == 1) and (groups['masters'] | length == 1) }}"
+  children:
+    bastions: # n.b. Currently only a single bastion is supported
+      hosts:
+        bastion:
+          ansible_host:  10.40.0.100 # Must be reachable from the Ansible control node
+          ansible_connection: local # if your are not running crucible from the bastion then remove this line
+    services:
+      hosts:
+        assisted_installer:
+          ansible_host: service_host.example.lab
+          host: service_host.example.lab
+          port: 8090 # Do not change
+        registry_host:
+          ansible_host: registry.example.lab
+          registry_port: 5000
+          registry_fqdn: registry.example.lab # use in case of different FQDN for the cert
+          cert_common_name: "{{ registry_fqdn }}"
+          cert_country: US
+          cert_locality: Raleigh
+          cert_organization: Red Hat, Inc.
+          cert_organizational_unit: Lab
+          cert_state: NC
+          REGISTRY_HTTP_SECRET: "{{ VAULT_REGISTRY_HOST_REGISTRY_HTTP_SECRET | mandatory }}"
+          disconnected_registry_user: "{{ VAULT_REGISTRY_HOST_DISCONNECTED_REGISTRY_USER | mandatory }}"
+          disconnected_registry_password: "{{ VAULT_REGISTRY_HOST_DISCONNECTED_REGISTRY_PASSWORD | mandatory }}"
+        dns_host:
+          ansible_host: 10.40.0.100
+        http_store:
+          ansible_host: 10.40.0.100
+        tftp_host:
+          ansible_host: "{{ hostvars['dns_host']['ansible_host'] }}"
+          tftp_directory: /var/lib/tftpboot/ 
+        ntp_host:
+          ansible_host: 10.40.0.100
+    vm_hosts:
+      hosts:
+        vm_host1: # Required for using "KVM" nodes, ignored if not.
+          ansible_user: root
+          ansible_host: vm_host.clustername.example.lab
+          host_ip_keyword: ansible_host # the varname in the KVM node hostvars which contains the *IP* of the VM
+          images_dir: /home/redhat/libvirt/images # directory where qcow images will be placed.
+          vm_bridge_ip: 10.60.0.190 # IP for the bridge between VMs and machine network
+          vm_bridge_interface: ens7f1 # Interface to be connected to the bridge. DO NOT use your primary interface.
+          dns: 10.40.0.100 # DNS used by the bridge
+          cert_vars_host_var_key: registry_host # Look up cert values from another host by name (excluding cert_common_name)
+    nodes:
+      vars:
+        bmc_user: "{{ VAULT_NODES_BMC_USER | mandatory }}"
+        bmc_password: "{{ VAULT_NODES_BMC_PASSWORD | mandatory }}"
+      children:
+        masters:
+          vars:
+            role: master
+            vendor: KVM # this example is a virtual control plane
+            bmc_address: "vm_host.clustername.example.lab:8082" # port can be changed using sushy_tools_port on the vm_host
+            vm_host: vm_host1
+            vm_spec:
+              cpu_cores: 4
+              ram_mib: 16384
+              disk_size_gb: 50
+          hosts:
+            super1:
+              ansible_host: 10.60.0.101
+              mac: "DE:AD:BE:EF:C0:2C"
+            super2:
+              ansible_host: 10.60.0.102
+              mac: "DE:AD:BE:EF:C0:2D"
+            super3:
+              ansible_host: 10.60.0.103
+              mac: "DE:AD:BE:EF:C0:2E"
+        workers:
+          vars:
+            role: worker
+            vendor: Dell # This example uses baremetal worker nodes
+          hosts:
+            worker1:
+              ansible_host: 10.60.0.104
+              bmc_address: 172.28.11.25
+              mac: 3C:FD:FE:78:AB:03
+            worker2:
+              ansible_host: 10.60.0.105
+              bmc_address: 172.28.11.26
+              mac: 3C:FD:FE:78:AB:04
