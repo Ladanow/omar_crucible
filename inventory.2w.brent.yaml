@@ -331,16 +331,16 @@ all:
                     address:
                       - ip: "{{ ansible_host }}"
                         prefix-length: "{{ mask }}"
-              dns-resolver:
-                config:
-                  server:
-                    - "{{ dns1 }}"
-              routes:
-                config:
-                  - destination: 0.0.0.0/0
-                    next-hop-address: "{{ gateway }}"
-                    next-hop-interface: ens3f1
-                    metric: 50
+                dns-resolver:
+                  config:
+                    server:
+                      - "{{ dns1 }}"
+                routes:
+                  config:
+                    - destination: 0.0.0.0/0
+                      next-hop-address: "{{ gateway }}"
+                      next-hop-interface: ens3f1
+                      metric: 50
               interfaces:
                 - name: ens3f1
                   macAddress: "{{ mac }}"
