@@ -313,41 +313,38 @@ all:
           vars:
             role: worker #vendor: Dell # This example uses baremetal worker nodes
             vendor: Dell
-            mac_interface_map:
-             - logical_nic_name: ens3f1
-               mac_address: "{{ mac }}"
-             - logical_nic_name: eno2
-               mac_address: "{{ eno2mac }}"
             network_config:
-              raw:
-                interfaces:
-                  - name: eno2
-                    type: ethernet
-                    state: up
-                    ipv4:
-                      enabled: false
-                      dhcp: false
-                    ipv6:
-                      enabled: false
-                      dhcp: false
-                  - name: ens3f1
-                    type: ethernet
-                    state: up
-                    ipv4:
-                      address:
-                        - ip: "{{ ansible_host }}"
-                          prefix-length: "{{ mask }}"
-                      enabled: true
-                dns-resolver:
-                  config:
-                    server:
-                      - "{{ dns1 }}"
-                routes:
-                  config:
-                    - destination: 0.0.0.0/0
-                      next-hop-address: "{{ gateway }}"
-                      next-hop-interface: ens3f1
-                      metric: 50
+                    #    raw:
+              interfaces:
+                - name: eno2
+                  type: ethernet
+                  state: up
+                  ipv4: 
+                    enabled: false
+                  ipv6:
+                    enabled: false
+            #       - name: ens3f1
+            #           type: ethernet
+            #           state: up
+            #           ipv4:
+            #             address:
+            #               - ip: "{{ ansible_host }}"
+            #                 prefix-length: "{{ mask }}"
+            #         dns-resolver:
+            #           config:
+            #             server:
+            #               - "{{ dns1 }}"
+            #         routes:
+            #           config:
+            #             - destination: 0.0.0.0/0
+            #               next-hop-address: "{{ gateway }}"
+            #               next-hop-interface: ens3f1
+            #               metric: 50
+            #  interfaces:
+            #    - name: ens3f1
+            #      macAddress: "{{ mac }}"
+            #    - name: eno2
+            #      macAddress: "{{ eno2mac }}"
           hosts:
             worker1:
               ansible_host: 10.1.198.137

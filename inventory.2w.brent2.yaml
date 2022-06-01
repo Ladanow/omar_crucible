@@ -13,8 +13,8 @@ all:
     base_dns_domain: pool5.redhat.lab
 
     # OpenShift version (4.6.16, 4.7.33, 4.8.14 or 4.9.0)
-    openshift_full_version: 4.9.11
-    #cluster_id: 4ddcf289-1aa2-40ea-93eb-05383b0c85a1
+    openshift_full_version: 4.9.0
+    cluster_id: 4ddcf289-1aa2-40ea-93eb-05383b0c85a1
     ai_version: v2.1.0
     # Virtual IP addresses used to access the resulting OpenShift cluster
     api_vip: 10.1.198.140 # the IP address to be used for api.clustername.example.lab and api-int.clustername.example.lab
@@ -292,7 +292,7 @@ all:
             vm_spec:
               cpu_cores: 4
               ram_mib: 16384
-              disk_size_gb: 159
+              disk_size_gb: 150
           hosts:
             master1:
               ansible_host: 10.1.198.132
