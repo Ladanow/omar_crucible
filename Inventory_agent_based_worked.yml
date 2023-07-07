@@ -266,61 +266,96 @@ all:
         dns1: 192.168.32.4
         gateway: 192.168.32.1
         bond0_mask: 25
-        network_config:
-          raw:
-            interfaces:
-              - name: bond0
-                type: bond
-                state: up
-                link_aggregation:
-                  mode: '802.3ad'
-                  options:
-                    miimon: "1500"
-                    #lacp_rate: "fast"
-                  port:
-                  - eno12399
-                  - eno12409
-                ipv4:
-                  address:
-                  - ip: "{{ ansible_host }}"
-                    prefix-length: "{{ bond0_mask }}"
-                  dhcp: false
-                  enabled: true  
-              - name: eno12399
-                type: ethernet
-                mac-address: "{{ mac }}"
-                state: down
-              - name: eno12409
-                type: ethernet
-                mac-address: "{{ mac2 }}"
-                state: down
-            dns_server_ips:
-              - "{{ dns1 }}"
-            routes:
-              - destination: 0.0.0.0/0
-                address: "{{ gateway }}"
-                interface: bond0
-                  
-  
   
       children:
         masters:
           vars:
             role: master
             vendor: DELL # this example is a virtual control plane
-            bmc_address: "vm_host.clustername.example.lab:8082" # port can be changed using sushy_tools_port on the vm_host
-            vm_host: vm_host1
-            vm_spec:
-              cpu_cores: 4
-              ram_mib: 16384
-              disk_size_gb: 50
+            mask: 25
+            mac_interface_map:
+              - logical_nic_name: eno12399
+                mac_address: "{{ mac }}"
+              - logical_nic_name: eno12409
+                mac_address: "{{ mac2 }}"
+              - logical_nic_name: eno8303
+                mac_address: "{{ mac3 }}"
+              - logical_nic_name: eno8403
+                mac_address: "{{ mac4 }}"                 
+            network_config:
+              raw:
+                interfaces:
+                  - name: bond0
+                    type: bond
+                    state: up
+                    link-aggregation:
+                      mode: '802.3ad'
+                      options:
+                        miimon: "1500"
+                        #lacp_rate: "fast"
+                      port:
+                      - eno12399
+                      - eno12409
+                    ipv4:
+                      address:
+                      - ip: "{{ ansible_host }}"
+                        prefix-length: "{{ bond0_mask }}"
+                      dhcp: false
+                      enabled: true
+                  - name: eno12399
+                    type: ethernet
+                    mac-address: "{{ mac }}"
+                    state: up
+                      #                    ipv4:
+                      #                      address:
+                      #                        - ip: "{{ ansible_host }}"
+                      #                          prefix-length: "{{ mask }}"
+                      #                      enabled: true                      
+                  - name: eno12409
+                    type: ethernet
+                    mac-address: "{{ mac2 }}"
+                    state: up
+                      #                    ipv4:
+                      #                      address:
+                      #                        - ip: "{{ ansible_host }}"
+                      #                          prefix-length: "{{ mask }}"
+                      #                      enabled: true
+                  - name: eno8303
+                    type: ethernet
+                    state: up
+                    ipv4:
+                      enabled: false
+                      dhcp: false
+                    ipv6:
+                      enabled: false
+                      dhcp: false
+                  - name: eno8403
+                    type: ethernet
+                    state: up
+                    ipv4:
+                      enabled: false
+                      dhcp: false
+                    ipv6:
+                      enabled: false
+                      dhcp: false
+                dns-resolver:
+                  config:
+                    server:
+                      - "{{ dns1 }}"                        
+                routes:
+                  config:
+                    - destination: 0.0.0.0/0
+                      next-hop-address: "{{ gateway }}"
+                      next-hop-interface: bond0
+
+
           hosts:
             super1:
               ansible_host: 192.168.32.10
-              mac: B4:96:91:BA:AE:70
-              mac2: B4:96:91:BA:AE:71
-              mac3: 70:B5:E8:F0:4D:2E
-              mac4: 70:B5:E8:F0:4D:2F  
+              mac: "B4:96:91:BA:AE:70"
+              mac2: "B4:96:91:BA:AE:71"
+              mac3: "70:B5:E8:F0:4D:2E"
+              mac4: "70:B5:E8:F0:4D:2F"  
               bmc_address: 192.168.32.241            
               # # Uncomment to set custom BMC credentials for the node
               # # These variables must be set in the inventory.vault.yml file
@@ -329,17 +364,17 @@ all:
 
             super2:
               ansible_host: 192.168.32.11
-              mac: B4:96:91:BA:1B:3C
-              mac2: B4:96:91:BA:1B:3D
-              mac3: 70:B5:E8:F0:51:3A
-              mac4: 70:B5:E8:F0:51:3B
+              mac: "B4:96:91:BA:1B:3C"
+              mac2: "B4:96:91:BA:1B:3D"
+              mac3: "70:B5:E8:F0:51:3A"
+              mac4: "70:B5:E8:F0:51:3B"
               bmc_address: 192.168.32.242
             super3:
               ansible_host: 192.168.32.12
-              mac: B4:96:91:B4:C2:94
-              mac2: B4:96:91:B4:C2:95
-              mac3: 70:B5:E8:F0:59:88
-              mac4: 70:B5:E8:F0:59:89
+              mac: "B4:96:91:B4:C2:94"
+              mac2: "B4:96:91:B4:C2:95"
+              mac3: "70:B5:E8:F0:59:88"
+              mac4: "70:B5:E8:F0:59:89"
               bmc_address: 192.168.32.243
                 #        workers:
                 #          vars:
