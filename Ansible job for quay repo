@@ -74,6 +74,7 @@ spec:
     oc project quay-enterpris
     echo "Checking for config map for ImageSource..."
     while [ $(oc get cm -n quay-enterprise imageset | wc -l) != "2" ]; do echo "watiting for 5 seconds.."; sleep 5; done
+    cd /home/mano/oc-mirror
     oc extract configmap/imageset
 
 - name: Export quay certificate and import to Bastion
@@ -87,6 +88,7 @@ spec:
 - name: Extract pull secret
   ansible.builtin.shell: |
     echo "Extract the current pull secret"
+    cd /home/mano/oc-mirror
     oc extract -n openshift-config secret/pull-secret --confirm --to=.
   
 - name: Add quay creditntal to pull secret
@@ -98,6 +100,7 @@ spec:
     b64auth=$(echo -n '$QUAY_USER:$QUAY_PASSWD' | base64 -w0); echo $b64auth
     AUTHSTRING="{\"$QUAY_HOSTNAME\": {\"auth\": \"$b64auth\",\"email\": \"dummy@quay1.npss\"}}"; 
     echo $AUTHSTRING
+    cd /home/mano/oc-mirror
     jq -c ".auths += $AUTHSTRING" < .dockerconfigjson > .dockerconfigjson-upd
     echo "Push updated pull secret back to the cluster"
     oc -n openshift-config set data secret/pull-secret --from-file=.dockerconfigjson=.dockerconfigjson-upd
@@ -110,5 +113,6 @@ spec:
 - name: Mirroring
   ansible.builtin.shell: |
     echo "Mirroring..."
+    cd /home/mano/oc-mirror
     oc-mirror --config=./ImageSetConfiguration.yaml docker://{{ .Values.job.quay_hostname }}/ocpocp4
 
