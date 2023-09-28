@@ -91,7 +91,6 @@ spec:
   
 - name: Add quay creditntal to pull secret
   ansible.builtin.shell: |
-    oc extract -n openshift-config secret/pull-secret --confirm --to=.
     echo "Add new quay credentials to pull secret"
     QUAY_HOSTNAME= {{ .Values.job.quay_hostname }}
     QUAY_USER = {{ .Values.job.quay_user }}
@@ -104,9 +103,12 @@ spec:
     oc -n openshift-config set data secret/pull-secret --from-file=.dockerconfigjson=.dockerconfigjson-upd
     mkdir ~/.docker
     mv .dockerconfigjson-upd ~/.docker/config.json
+    rm -f .dockerconfigjson-upd
+    rm -f .dockerconfigjson
+
 
 - name: Mirroring
   ansible.builtin.shell: |
     echo "Mirroring..."
-    oc-mirror --config=./ImageSetConfiguration.yaml docker://$QUAY_HOSTNAME
+    oc-mirror --config=./ImageSetConfiguration.yaml docker://{{ .Values.job.quay_hostname }}/ocpocp4
 
